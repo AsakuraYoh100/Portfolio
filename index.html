@@ -935,6 +935,28 @@
     #stb.show { opacity:1; visibility:visible; transform:translateY(0); }
     #stb:hover { background:rgba(255,255,255,0.12); color:var(--t1); transform:translateY(-2px); }
 
+    #sound-toggle {
+      position:fixed; bottom:26px; right:78px; z-index:99;
+      width:42px; height:42px; border-radius:var(--r);
+      background:rgba(255,255,255,0.07);
+      border:1px solid rgba(255,255,255,0.1);
+      color:var(--t2); font-size:0.85rem;
+      display:flex; align-items:center; justify-content:center;
+      transition:all .3s ease;
+    }
+    #sound-toggle:hover { background:rgba(255,255,255,0.12); color:var(--t1); transform:translateY(-2px); }
+    #sound-toggle.on {
+      color:var(--cyan);
+      border-color:rgba(34,211,238,0.35);
+      background:rgba(34,211,238,0.08);
+      box-shadow:0 0 16px rgba(34,211,238,0.25);
+    }
+    #sound-toggle.on i { animation:soundPulse 1.6s ease-in-out infinite; }
+    @keyframes soundPulse { 0%,100%{opacity:1;} 50%{opacity:0.55;} }
+    @media (max-width:768px) {
+      #sound-toggle { bottom:22px; right:74px; width:38px; height:38px; }
+    }
+
     /* ================================================
        REVEAL ANIMATIONS
     ================================================ */
@@ -1661,6 +1683,12 @@ $ proxmox-ve <span class="fn">create-vm</span>
 
   <!-- Scroll-to-top -->
   <button id="stb" aria-label="Scroll to top"><i class="fas fa-chevron-up"></i></button>
+  <button id="sound-toggle" aria-label="Toggle background sound" aria-pressed="false">
+    <i class="fas fa-volume-mute"></i>
+  </button>
+
+  <!-- Three.js — powers the 3D background scene -->
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js"></script>
 
   <!-- ============================== JAVASCRIPT ============================== -->
   <script>
@@ -1705,75 +1733,102 @@ $ proxmox-ve <span class="fn">create-vm</span>
     })();
 
     /* ====================================================
-       PARTICLE CANVAS
+       3D BACKGROUND — Three.js
+       Mouse-reactive particle field + slow-spinning
+       wireframe geometry in the site's blue/purple/cyan palette.
     ==================================================== */
-    const cvs = document.getElementById('canvas');
-    const ctx = cvs.getContext('2d');
-    let pts = [], raf;
-    const mouse = { x:null, y:null };
-    const N = 65;
+    const reduceMotion = window.matchMedia('(prefers-reduced-motion: reduce)').matches;
+    const mouse3d = { x:0, y:0, tx:0, ty:0 };
+    window.addEventListener('mousemove', e => {
+      mouse3d.tx = (e.clientX / window.innerWidth  - 0.5) * 2;
+      mouse3d.ty = (e.clientY / window.innerHeight - 0.5) * 2;
+    });
 
-    function resize() {
-      cvs.width  = window.innerWidth;
-      cvs.height = window.innerHeight;
-    }
-    resize();
-    window.addEventListener('resize', resize);
-    window.addEventListener('mousemove', e => { mouse.x = e.clientX; mouse.y = e.clientY; });
+    (function initThreeBG() {
+      if (typeof THREE === 'undefined') return; // graceful fallback if CDN blocked
+      const cvs = document.getElementById('canvas');
+      const renderer = new THREE.WebGLRenderer({ canvas: cvs, alpha:true, antialias:true });
+      renderer.setPixelRatio(Math.min(window.devicePixelRatio, 2));
+      renderer.setSize(window.innerWidth, window.innerHeight);
 
-    class Pt {
-      constructor() { this.reset(); }
-      reset() {
-        this.x = Math.random() * cvs.width;
-        this.y = Math.random() * cvs.height;
-        this.vx = (Math.random() - 0.5) * 0.25;
-        this.vy = (Math.random() - 0.5) * 0.25;
-        this.r  = Math.random() * 1.5 + 0.4;
-        this.a  = Math.random() * 0.35 + 0.08;
+      const scene  = new THREE.Scene();
+      const camera = new THREE.PerspectiveCamera(60, window.innerWidth/window.innerHeight, 0.1, 200);
+      camera.position.z = 34;
+
+      // --- Particle field ---
+      const PCOUNT = window.innerWidth < 768 ? 260 : 550;
+      const posArr = new Float32Array(PCOUNT * 3);
+      const colArr = new Float32Array(PCOUNT * 3);
+      const palette = [
+        new THREE.Color(0x3b82f6),
+        new THREE.Color(0x8b5cf6),
+        new THREE.Color(0x22d3ee),
+      ];
+      for (let i = 0; i < PCOUNT; i++) {
+        posArr[i*3+0] = (Math.random()-0.5) * 90;
+        posArr[i*3+1] = (Math.random()-0.5) * 60;
+        posArr[i*3+2] = (Math.random()-0.5) * 60 - 10;
+        const c = palette[Math.floor(Math.random()*palette.length)];
+        colArr[i*3+0] = c.r; colArr[i*3+1] = c.g; colArr[i*3+2] = c.b;
       }
-      move() {
-        if (mouse.x !== null) {
-          const dx = this.x - mouse.x, dy = this.y - mouse.y;
-          const d = Math.hypot(dx, dy);
-          if (d < 90) { this.x += dx/d * 0.4; this.y += dy/d * 0.4; }
+      const pGeo = new THREE.BufferGeometry();
+      pGeo.setAttribute('position', new THREE.BufferAttribute(posArr, 3));
+      pGeo.setAttribute('color', new THREE.BufferAttribute(colArr, 3));
+      const pMat = new THREE.PointsMaterial({
+        size: 0.22, vertexColors: true, transparent: true,
+        opacity: 0.75, blending: THREE.AdditiveBlending, depthWrite: false,
+      });
+      const points = new THREE.Points(pGeo, pMat);
+      scene.add(points);
+
+      // --- Floating wireframe geometry (tech / IoT motif) ---
+      const shapes = [];
+      const shapeDefs = [
+        { geo: new THREE.IcosahedronGeometry(4.2, 0), color: 0x3b82f6, pos: [-14, 6, -8] },
+        { geo: new THREE.OctahedronGeometry(3.2, 0),  color: 0x8b5cf6, pos: [15, -5, -14] },
+        { geo: new THREE.TorusGeometry(3, 0.35, 8, 24), color: 0x22d3ee, pos: [10, 9, -20] },
+        { geo: new THREE.IcosahedronGeometry(2.2, 0), color: 0xf59e0b, pos: [-11, -8, -16] },
+      ];
+      shapeDefs.forEach(def => {
+        const mat = new THREE.MeshBasicMaterial({ color: def.color, wireframe: true, transparent:true, opacity:0.35 });
+        const mesh = new THREE.Mesh(def.geo, mat);
+        mesh.position.set(...def.pos);
+        mesh.userData.spin = (Math.random()*0.4 + 0.15) * (Math.random() < 0.5 ? -1 : 1);
+        scene.add(mesh);
+        shapes.push(mesh);
+      });
+
+      function onResize() {
+        camera.aspect = window.innerWidth / window.innerHeight;
+        camera.updateProjectionMatrix();
+        renderer.setSize(window.innerWidth, window.innerHeight);
+      }
+      window.addEventListener('resize', onResize);
+
+      let clock = new THREE.Clock();
+      function tick() {
+        const dt = clock.getDelta();
+
+        if (!reduceMotion) {
+          points.rotation.y += dt * 0.02;
+          points.rotation.x += dt * 0.005;
+          shapes.forEach(s => {
+            s.rotation.x += dt * s.userData.spin * 0.3;
+            s.rotation.y += dt * s.userData.spin * 0.4;
+          });
+          // smooth mouse parallax on camera
+          mouse3d.x += (mouse3d.tx - mouse3d.x) * 0.03;
+          mouse3d.y += (mouse3d.ty - mouse3d.y) * 0.03;
+          camera.position.x = mouse3d.x * 3;
+          camera.position.y = -mouse3d.y * 2;
+          camera.lookAt(0, 0, -10);
         }
-        this.x += this.vx; this.y += this.vy;
-        if (this.x < 0 || this.x > cvs.width)  this.vx *= -1;
-        if (this.y < 0 || this.y > cvs.height) this.vy *= -1;
+
+        renderer.render(scene, camera);
+        requestAnimationFrame(tick);
       }
-      draw() {
-        ctx.beginPath();
-        ctx.arc(this.x, this.y, this.r, 0, Math.PI*2);
-        ctx.fillStyle = `rgba(255,255,255,${this.a})`;
-        ctx.fill();
-      }
-    }
-
-    for (let i = 0; i < N; i++) pts.push(new Pt());
-
-    function drawLines() {
-      for (let i = 0; i < pts.length; i++)
-        for (let j = i+1; j < pts.length; j++) {
-          const dx = pts[i].x - pts[j].x, dy = pts[i].y - pts[j].y;
-          const d = Math.hypot(dx, dy);
-          if (d < 110) {
-            ctx.beginPath();
-            ctx.moveTo(pts[i].x, pts[i].y);
-            ctx.lineTo(pts[j].x, pts[j].y);
-            ctx.strokeStyle = `rgba(255,255,255,${0.055*(1-d/110)})`;
-            ctx.lineWidth = 0.5;
-            ctx.stroke();
-          }
-        }
-    }
-
-    function anim() {
-      ctx.clearRect(0, 0, cvs.width, cvs.height);
-      pts.forEach(p => { p.move(); p.draw(); });
-      drawLines();
-      raf = requestAnimationFrame(anim);
-    }
-    anim();
+      tick();
+    })();
 
     /* ====================================================
        NAVBAR
@@ -1909,6 +1964,118 @@ $ proxmox-ve <span class="fn">create-vm</span>
         btn.innerHTML = '<i class="fas fa-paper-plane"></i> Send Message';
       }, 900);
     });
+
+    /* ====================================================
+       SOUND SYSTEM — synthesized with Web Audio API
+       (no external audio files, so nothing to host or break)
+       - Soft UI "blip" on buttons / links / cards
+       - Ambient background pad, toggled by the speaker button
+    ==================================================== */
+    (function initSound() {
+      let audioCtx = null;
+      let ambientNodes = null;
+      let ambientOn = false;
+      const soundBtn = document.getElementById('sound-toggle');
+      const soundIcon = soundBtn.querySelector('i');
+
+      function getCtx() {
+        if (!audioCtx) {
+          audioCtx = new (window.AudioContext || window.webkitAudioContext)();
+        }
+        if (audioCtx.state === 'suspended') audioCtx.resume();
+        return audioCtx;
+      }
+
+      // Short, soft UI click — quick sine blip through a lowpass + fast decay
+      function playClick() {
+        const ctx = getCtx();
+        const t0 = ctx.currentTime;
+
+        const osc = ctx.createOscillator();
+        const gain = ctx.createGain();
+        const filter = ctx.createBiquadFilter();
+
+        osc.type = 'sine';
+        osc.frequency.setValueAtTime(720, t0);
+        osc.frequency.exponentialRampToValueAtTime(340, t0 + 0.09);
+
+        filter.type = 'lowpass';
+        filter.frequency.value = 2200;
+
+        gain.gain.setValueAtTime(0.0001, t0);
+        gain.gain.exponentialRampToValueAtTime(0.06, t0 + 0.008);
+        gain.gain.exponentialRampToValueAtTime(0.0001, t0 + 0.14);
+
+        osc.connect(filter).connect(gain).connect(ctx.destination);
+        osc.start(t0);
+        osc.stop(t0 + 0.16);
+      }
+
+      // Slow-evolving ambient pad — three detuned oscillators through a
+      // gentle lowpass with a slow LFO on filter cutoff, very low volume.
+      function startAmbient() {
+        const ctx = getCtx();
+        const master = ctx.createGain();
+        master.gain.setValueAtTime(0, ctx.currentTime);
+        master.gain.linearRampToValueAtTime(0.05, ctx.currentTime + 1.2);
+        master.connect(ctx.destination);
+
+        const filter = ctx.createBiquadFilter();
+        filter.type = 'lowpass';
+        filter.frequency.value = 800;
+        filter.connect(master);
+
+        const freqs = [110, 165.5, 220]; // A2, ~E3, A3 — calm, ambient
+        const oscs = freqs.map(f => {
+          const osc = ctx.createOscillator();
+          osc.type = 'sine';
+          osc.frequency.value = f;
+          const g = ctx.createGain();
+          g.gain.value = 0.5;
+          osc.connect(g).connect(filter);
+          osc.start();
+          return osc;
+        });
+
+        // slow LFO breathing on the filter cutoff for movement
+        const lfo = ctx.createOscillator();
+        const lfoGain = ctx.createGain();
+        lfo.frequency.value = 0.05;
+        lfoGain.gain.value = 260;
+        lfo.connect(lfoGain).connect(filter.frequency);
+        lfo.start();
+
+        ambientNodes = { master, filter, oscs, lfo };
+      }
+
+      function stopAmbient() {
+        if (!ambientNodes) return;
+        const ctx = getCtx();
+        const now = ctx.currentTime;
+        ambientNodes.master.gain.linearRampToValueAtTime(0, now + 0.6);
+        setTimeout(() => {
+          ambientNodes.oscs.forEach(o => o.stop());
+          ambientNodes.lfo.stop();
+          ambientNodes = null;
+        }, 700);
+      }
+
+      soundBtn.addEventListener('click', () => {
+        getCtx();
+        ambientOn = !ambientOn;
+        soundBtn.classList.toggle('on', ambientOn);
+        soundBtn.setAttribute('aria-pressed', String(ambientOn));
+        soundIcon.className = ambientOn ? 'fas fa-volume-up' : 'fas fa-volume-mute';
+        if (ambientOn) startAmbient(); else stopAmbient();
+        playClick();
+      });
+
+      // Soft click sound on primary interactive elements
+      const clickTargets = '.btn, .soc-link, .nav-links a, .mob-nav a, .ecourse, .sitem, #stb';
+      document.addEventListener('click', e => {
+        if (e.target.closest(clickTargets)) playClick();
+      });
+    })();
   </script>
 </body>
 </html>
