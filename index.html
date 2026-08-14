@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-    <meta name="description" content="Elijah Christian De Dios — IT Professional & Developer. Award-winning capstone. Specializing in web development, IoT, and systems administration." />
+    <meta name="description" content="Elijah Christian De Dios — IT Professional & Developer" />
     <title>Elijah Christian De Dios — 3D Portfolio</title>
 
     <link rel="preconnect" href="https://fonts.googleapis.com" />
@@ -98,7 +98,7 @@
         }
 
         /* ================================================
-           CUSTOM CURSOR — refined
+           CUSTOM CURSOR
         ================================================ */
         #cursor {
             position: fixed;
@@ -588,7 +588,7 @@
         }
 
         /* ================================================
-           HERO
+           HERO — Left-aligned with space on the left
         ================================================ */
         #hero {
             min-height: 100vh;
@@ -598,6 +598,26 @@
             overflow: hidden;
             padding: 140px 0 80px;
             will-change: transform;
+        }
+
+        /* Override wrap for hero — left-aligned */
+        #hero .wrap {
+            margin: 0;
+            max-width: 100%;
+            padding: 0 40px 0 60px;
+            width: 100%;
+        }
+
+        @media (max-width: 1024px) {
+            #hero .wrap {
+                padding: 0 32px 0 40px;
+            }
+        }
+
+        @media (max-width: 768px) {
+            #hero .wrap {
+                padding: 0 24px;
+            }
         }
 
         .orb {
@@ -648,7 +668,14 @@
         .hero-content {
             position: relative;
             z-index: 2;
-            max-width: 700px;
+            max-width: 720px;
+            margin-left: 0;
+        }
+
+        @media (max-width: 768px) {
+            .hero-content {
+                max-width: 100%;
+            }
         }
 
         .avail-pill {
@@ -858,7 +885,7 @@
         }
 
         /* ================================================
-           ENERDUO — SIGNATURE SECTION
+           ENERDUO
         ================================================ */
         #enerduo {
             padding: 80px 0 120px;
@@ -2173,7 +2200,6 @@
             top: 0;
         }
 
-        /* Floating code cards */
         .float-zone {
             position: absolute;
             inset: 0;
@@ -2590,7 +2616,7 @@
             </div>
         </section>
 
-        <!-- ===== TECH STACK — Expanded with resume skills ===== -->
+        <!-- ===== TECH STACK ===== -->
         <section id="stack" aria-label="Tech stack">
             <div class="wrap">
                 <div class="sec-head rev">
@@ -2600,7 +2626,6 @@
                 </div>
                 <div class="stack-cols">
 
-                    <!-- Programming Languages -->
                     <div class="card scat rev d1">
                         <div class="scat-head"><span class="scat-dot sd-blue"></span>Programming Languages</div>
                         <div class="scat-items">
@@ -2612,7 +2637,6 @@
                         </div>
                     </div>
 
-                    <!-- Web Development -->
                     <div class="card scat rev d2">
                         <div class="scat-head"><span class="scat-dot sd-green"></span>Web Development</div>
                         <div class="scat-items">
@@ -2626,7 +2650,6 @@
                         </div>
                     </div>
 
-                    <!-- Systems & IT -->
                     <div class="card scat rev d3">
                         <div class="scat-head"><span class="scat-dot sd-purple"></span>Systems &amp; IT</div>
                         <div class="scat-items">
@@ -2639,7 +2662,6 @@
                         </div>
                     </div>
 
-                    <!-- Cloud & Virtualization -->
                     <div class="card scat rev d4">
                         <div class="scat-head"><span class="scat-dot sd-amber"></span>Cloud &amp; Virtualization</div>
                         <div class="scat-items">
@@ -2651,7 +2673,6 @@
                         </div>
                     </div>
 
-                    <!-- Creative & Media -->
                     <div class="card scat rev d5">
                         <div class="scat-head"><span class="scat-dot sd-cyan"></span>Creative &amp; Media</div>
                         <div class="scat-items">
@@ -2664,7 +2685,6 @@
                         </div>
                     </div>
 
-                    <!-- Version Control & Tools -->
                     <div class="card scat rev d6">
                         <div class="scat-head"><span class="scat-dot sd-pink"></span>Dev Tools &amp; Productivity</div>
                         <div class="scat-items">
@@ -3315,7 +3335,7 @@
             }
 
             /* ====================================================
-               HERO 3D — Enhanced
+               HERO 3D
             ==================================================== */
             let heroSceneReady = false;
             let heroScene, heroCamera, heroRenderer, heroMesh, heroParticles;
@@ -3338,7 +3358,6 @@
                 renderer.setClearColor(0x000000, 0);
                 container.appendChild(renderer.domElement);
 
-                // Main torus knot — darker blue
                 const geo = new THREE.TorusKnotGeometry(2.8, 0.75, 180, 18);
                 const mat = new THREE.MeshPhysicalMaterial({
                     color: 0x2a5a9a,
@@ -3355,7 +3374,6 @@
                 mesh.position.set(0, 0, 0);
                 scene.add(mesh);
 
-                // Wireframe overlay — lighter blue
                 const wireGeo = new THREE.TorusKnotGeometry(2.85, 0.8, 140, 14);
                 const wireMat = new THREE.MeshBasicMaterial({
                     color: 0x4a7ac4,
@@ -3366,7 +3384,6 @@
                 const wireMesh = new THREE.Mesh(wireGeo, wireMat);
                 scene.add(wireMesh);
 
-                // Orbiting rings
                 const ringMat = new THREE.MeshBasicMaterial({
                     color: 0x6a4aaa,
                     transparent: true,
@@ -3386,7 +3403,6 @@
                 ring2.rotation.y = 0.6;
                 scene.add(ring2);
 
-                // Orbiting particles
                 const orbCount = 100;
                 const orbPos = new Float32Array(orbCount * 3);
                 const orbColors = new Float32Array(orbCount * 3);
@@ -3491,7 +3507,7 @@
             }, 1500);
 
             /* ====================================================
-               AUDIO — Ambient
+               AUDIO
             ==================================================== */
             let audioCtx = null;
             let ambientNodes = null;
