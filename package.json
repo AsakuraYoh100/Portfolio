@@ -1,0 +1,9 @@
+{
+  "name": "elijah-portfolio",
+  "version": "1.0.0",
+  "private": true,
+  "description": "Elijah Christian De Dios — portfolio site with the Elijah AI assistant (Vercel serverless /api/chat).",
+  "engines": {
+    "node": ">=18"
+  }
+}
