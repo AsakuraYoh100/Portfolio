@@ -1,10 +1,12 @@
 // api/chat.js
 // Vercel serverless function — server-side brain for "Elijah AI".
-// The OpenAI API key is read from an environment variable and NEVER
-// sent to the browser. The client only ever talks to this endpoint.
+// Uses Google's Gemini API, which has a genuinely free tier (no credit
+// card required) as long as billing is never enabled on the project.
+// The API key is read from an environment variable and NEVER sent to
+// the browser — the client only ever talks to this endpoint.
 
-const OPENAI_URL = 'https://api.openai.com/v1/chat/completions';
-const MODEL = process.env.OPENAI_MODEL || 'gpt-4o-mini';
+const MODEL = process.env.GEMINI_MODEL || 'gemini-2.5-flash-lite';
+const GEMINI_URL = `https://generativelanguage.googleapis.com/v1beta/models/${MODEL}:generateContent`;
 
 // ---- Safe destinations. The model may only reference these keys — it
 // can never invent an arbitrary URL or section id. ----
@@ -132,7 +134,7 @@ module.exports = async function handler(req, res) {
     return;
   }
 
-  if (!process.env.OPENAI_API_KEY) {
+  if (!process.env.GEMINI_API_KEY) {
     res.status(500).json({ error: 'server_not_configured' });
     return;
   }
@@ -159,21 +161,26 @@ module.exports = async function handler(req, res) {
     return;
   }
 
+  // Gemini uses "user" / "model" roles instead of "user" / "assistant".
+  const geminiContents = cleanHistory.map(m => ({
+    role: m.role === 'assistant' ? 'model' : 'user',
+    parts: [{ text: m.content }]
+  }));
+
   const payload = {
-    model: MODEL,
-    messages: [{ role: 'system', content: buildSystemPrompt() }, ...cleanHistory],
-    response_format: { type: 'json_object' },
-    temperature: 0.5,
-    max_tokens: 400
+    systemInstruction: { parts: [{ text: buildSystemPrompt() }] },
+    contents: geminiContents,
+    generationConfig: {
+      temperature: 0.5,
+      maxOutputTokens: 400,
+      responseMimeType: 'application/json'
+    }
   };
 
   try {
-    const upstream = await fetch(OPENAI_URL, {
+    const upstream = await fetch(`${GEMINI_URL}?key=${process.env.GEMINI_API_KEY}`, {
       method: 'POST',
-      headers: {
-        'Content-Type': 'application/json',
-        Authorization: `Bearer ${process.env.OPENAI_API_KEY}`
-      },
+      headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify(payload)
     });
 
@@ -183,7 +190,9 @@ module.exports = async function handler(req, res) {
     }
 
     const data = await upstream.json();
-    const raw = data && data.choices && data.choices[0] && data.choices[0].message && data.choices[0].message.content;
+    const raw = data && data.candidates && data.candidates[0]
+      && data.candidates[0].content && data.candidates[0].content.parts
+      && data.candidates[0].content.parts[0] && data.candidates[0].content.parts[0].text;
 
     let parsed;
     try { parsed = JSON.parse(raw); } catch (e) { parsed = null; }
