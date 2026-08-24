@@ -1191,6 +1191,340 @@
         }
 
         /* ================================================
+           ENERDUO — PROJECT GALLERY ("Inside ENERDUO")
+        ================================================ */
+        .ener-gallery {
+            position: relative;
+            z-index: 1;
+            margin-top: 56px;
+            padding-top: 44px;
+            border-top: 1px solid rgba(212, 160, 48, 0.1);
+        }
+        .ener-gallery-head {
+            display: flex;
+            align-items: baseline;
+            gap: 12px;
+            margin-bottom: 24px;
+            flex-wrap: wrap;
+        }
+        .ener-gallery-title {
+            font-family: 'Playfair Display', serif;
+            font-size: clamp(1.5rem, 2.6vw, 2rem);
+            font-weight: 700;
+            color: var(--white);
+            letter-spacing: -0.02em;
+        }
+        .ener-gallery-sub {
+            font-size: 0.8rem;
+            color: var(--t2);
+            font-family: 'JetBrains Mono', monospace;
+        }
+
+        .ener-gallery-grid {
+            display: grid;
+            grid-template-columns: 1.4fr 1fr;
+            grid-template-rows: 1fr 1fr;
+            gap: 18px;
+            perspective: 1400px;
+        }
+        .ener-gallery-item {
+            position: relative;
+            border-radius: var(--rl);
+            overflow: hidden;
+            border: 1px solid rgba(255, 255, 255, 0.06);
+            background: rgba(255, 255, 255, 0.015);
+            box-shadow: 0 24px 60px rgba(0, 0, 0, 0.5), 0 0 0 1px rgba(255, 255, 255, 0.02);
+            cursor: none;
+            transform-style: preserve-3d;
+            transition: transform 0.45s var(--spring), box-shadow 0.45s ease, border-color 0.45s ease;
+        }
+        .ener-gallery-item:focus-visible {
+            outline: 2px solid var(--amber);
+            outline-offset: 3px;
+        }
+        .ener-gallery-featured {
+            grid-column: 1;
+            grid-row: 1 / 3;
+            min-height: 100%;
+        }
+        .ener-gallery-featured img {
+            aspect-ratio: 4 / 5;
+        }
+        .ener-gallery-item:nth-of-type(2) {
+            grid-column: 2;
+            grid-row: 1;
+        }
+        .ener-gallery-item:nth-of-type(3) {
+            grid-column: 2;
+            grid-row: 2;
+        }
+        .ener-gallery-item img {
+            display: block;
+            width: 100%;
+            height: 100%;
+            aspect-ratio: 16 / 11;
+            object-fit: cover;
+            transition: transform 0.6s var(--spring), filter 0.5s ease;
+            filter: saturate(0.96);
+        }
+        .ener-gallery-item::before {
+            content: '';
+            position: absolute;
+            inset: 0;
+            background: linear-gradient(180deg, transparent 40%, rgba(4, 6, 10, 0.88) 100%);
+            opacity: 0.7;
+            transition: opacity 0.4s ease, background 0.4s ease;
+            z-index: 1;
+            pointer-events: none;
+        }
+        .ener-gallery-item::after {
+            content: '';
+            position: absolute;
+            inset: 0;
+            border-radius: inherit;
+            box-shadow: inset 0 0 0 1px rgba(212, 160, 48, 0);
+            transition: box-shadow 0.4s ease;
+            pointer-events: none;
+            z-index: 2;
+        }
+        .ener-gallery-item:hover,
+        .ener-gallery-item:focus-visible {
+            transform: translateY(-6px) scale(1.012);
+            border-color: rgba(212, 160, 48, 0.28);
+            box-shadow: 0 36px 90px rgba(0, 0, 0, 0.6), 0 0 32px rgba(212, 160, 48, 0.08), 0 0 0 1px rgba(255, 255, 255, 0.03);
+        }
+        .ener-gallery-item:hover img,
+        .ener-gallery-item:focus-visible img {
+            transform: scale(1.06);
+            filter: saturate(1.05);
+        }
+        .ener-gallery-item:hover::after,
+        .ener-gallery-item:focus-visible::after {
+            box-shadow: inset 0 0 0 1px rgba(212, 160, 48, 0.35);
+        }
+        .ener-gallery-item:hover::before {
+            opacity: 0.55;
+        }
+
+        .ener-gallery-cap {
+            position: absolute;
+            left: 0;
+            right: 0;
+            bottom: 0;
+            padding: 16px 18px;
+            z-index: 3;
+            display: flex;
+            align-items: flex-end;
+            justify-content: space-between;
+            gap: 10px;
+            pointer-events: none;
+        }
+        .ener-gallery-cap span {
+            font-size: 0.78rem;
+            font-weight: 500;
+            color: var(--t1);
+            line-height: 1.4;
+            max-width: 88%;
+        }
+        .ener-gallery-expand {
+            width: 28px;
+            height: 28px;
+            border-radius: 50%;
+            background: rgba(4, 6, 10, 0.55);
+            border: 1px solid rgba(212, 160, 48, 0.25);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            color: var(--amber);
+            font-size: 0.7rem;
+            flex-shrink: 0;
+            backdrop-filter: blur(6px);
+            transition: background 0.3s ease, transform 0.3s ease;
+        }
+        .ener-gallery-item:hover .ener-gallery-expand {
+            background: rgba(212, 160, 48, 0.16);
+            transform: scale(1.08);
+        }
+
+        /* Lightbox */
+        .ener-lightbox {
+            position: fixed;
+            inset: 0;
+            z-index: 999;
+            display: none;
+            align-items: center;
+            justify-content: center;
+            padding: 40px;
+            background: rgba(4, 6, 10, 0.86);
+            backdrop-filter: blur(14px);
+            -webkit-backdrop-filter: blur(14px);
+            opacity: 0;
+            transition: opacity 0.32s ease;
+        }
+        .ener-lightbox.open {
+            display: flex;
+            opacity: 1;
+        }
+        .ener-lightbox-frame {
+            position: relative;
+            max-width: min(1100px, 92vw);
+            max-height: 86vh;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            gap: 14px;
+            transform: scale(0.96) translateY(10px);
+            transition: transform 0.36s var(--spring);
+        }
+        .ener-lightbox.open .ener-lightbox-frame {
+            transform: scale(1) translateY(0);
+        }
+        .ener-lightbox-frame img {
+            display: block;
+            max-width: 100%;
+            max-height: 68vh;
+            width: auto;
+            border-radius: var(--rl);
+            border: 1px solid rgba(212, 160, 48, 0.18);
+            box-shadow: 0 40px 120px rgba(0, 0, 0, 0.7);
+            object-fit: contain;
+            background: #080b14;
+        }
+        .ener-lightbox-meta {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            gap: 4px;
+            text-align: center;
+        }
+        .ener-lightbox-label {
+            font-family: 'Playfair Display', serif;
+            font-weight: 700;
+            font-size: 0.95rem;
+            letter-spacing: 0.06em;
+            text-transform: uppercase;
+            color: var(--amber);
+        }
+        .ener-lightbox-caption {
+            font-size: 0.85rem;
+            color: var(--t1);
+        }
+        .ener-lightbox-count {
+            font-family: 'JetBrains Mono', monospace;
+            font-size: 0.72rem;
+            color: var(--t2);
+        }
+        .ener-lightbox-close {
+            position: absolute;
+            top: -18px;
+            right: -18px;
+            width: 40px;
+            height: 40px;
+            border-radius: 50%;
+            background: rgba(14, 20, 36, 0.9);
+            border: 1px solid rgba(212, 160, 48, 0.2);
+            color: var(--t1);
+            font-size: 1.05rem;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            cursor: none;
+            transition: background 0.3s ease, color 0.3s ease, transform 0.3s ease;
+        }
+        .ener-lightbox-close:hover {
+            background: rgba(212, 160, 48, 0.18);
+            color: var(--amber);
+            transform: rotate(90deg);
+        }
+        .ener-lightbox-nav {
+            position: absolute;
+            top: 50%;
+            transform: translateY(-50%);
+            width: 44px;
+            height: 44px;
+            border-radius: 50%;
+            background: rgba(14, 20, 36, 0.75);
+            border: 1px solid rgba(255, 255, 255, 0.08);
+            color: var(--t1);
+            font-size: 1rem;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            cursor: none;
+            transition: background 0.3s ease, border-color 0.3s ease, color 0.3s ease;
+        }
+        .ener-lightbox-nav:hover {
+            background: rgba(212, 160, 48, 0.16);
+            border-color: rgba(212, 160, 48, 0.3);
+            color: var(--amber);
+        }
+        .ener-lightbox-prev {
+            left: -64px;
+        }
+        .ener-lightbox-next {
+            right: -64px;
+        }
+
+        @media (max-width: 1200px) {
+            .ener-lightbox-prev {
+                left: 8px;
+            }
+            .ener-lightbox-next {
+                right: 8px;
+            }
+            .ener-lightbox-close {
+                top: 8px;
+                right: 8px;
+            }
+        }
+
+        @media (max-width: 860px) {
+            .ener-gallery-grid {
+                grid-template-columns: 1fr 1fr;
+                grid-template-rows: auto;
+            }
+            .ener-gallery-featured {
+                grid-column: 1 / 3;
+                grid-row: auto;
+            }
+            .ener-gallery-featured img {
+                aspect-ratio: 16 / 9;
+            }
+            .ener-gallery-item:nth-of-type(2) {
+                grid-column: 1;
+                grid-row: 2;
+            }
+            .ener-gallery-item:nth-of-type(3) {
+                grid-column: 2;
+                grid-row: 2;
+            }
+        }
+
+        @media (max-width: 560px) {
+            .ener-gallery {
+                margin-top: 40px;
+                padding-top: 32px;
+            }
+            .ener-gallery-grid {
+                grid-template-columns: 1fr;
+            }
+            .ener-gallery-featured {
+                grid-column: 1;
+            }
+            .ener-gallery-item:nth-of-type(2),
+            .ener-gallery-item:nth-of-type(3) {
+                grid-column: 1;
+                grid-row: auto;
+            }
+            .ener-gallery-item img {
+                aspect-ratio: 16 / 10;
+            }
+            .ener-lightbox {
+                padding: 16px;
+            }
+        }
+
+        /* ================================================
            PROJECTS GRID
         ================================================ */
         #projects {
@@ -2873,9 +3207,61 @@
                             </div>
                         </div>
                     </div>
+
+                    <!-- ===== ENERDUO PHOTO GALLERY ===== -->
+                    <div class="ener-gallery">
+                        <div class="ener-gallery-head">
+                            <h3 class="ener-gallery-title">Inside ENERDUO</h3>
+                            <span class="ener-gallery-sub">// the physical build, up close</span>
+                        </div>
+                        <div class="ener-gallery-grid" id="ener-gallery-grid">
+                            <button type="button" class="ener-gallery-item ener-gallery-featured" data-index="0" aria-label="Open photo 1 of 3 in lightbox">
+                                <img src="assets/enerduo-project-1.jpg" alt="ENERDUO solar-hybrid emergency charging station with project team" loading="lazy" />
+                                <div class="ener-gallery-cap">
+                                    <span>ENERDUO Charging Station — Completed Prototype</span>
+                                    <span class="ener-gallery-expand"><i class="fas fa-expand" aria-hidden="true"></i></span>
+                                </div>
+                            </button>
+                            <button type="button" class="ener-gallery-item" data-index="1" aria-label="Open photo 2 of 3 in lightbox">
+                                <img src="assets/enerduo-project-2.jpg" alt="ENERDUO charging station internal electrical components" loading="lazy" />
+                                <div class="ener-gallery-cap">
+                                    <span>Internal Hardware &amp; Power System</span>
+                                    <span class="ener-gallery-expand"><i class="fas fa-expand" aria-hidden="true"></i></span>
+                                </div>
+                            </button>
+                            <button type="button" class="ener-gallery-item" data-index="2" aria-label="Open photo 3 of 3 in lightbox">
+                                <img src="assets/enerduo-project-3.jpg" alt="ENERDUO project team demonstrating the emergency charging station" loading="lazy" />
+                                <div class="ener-gallery-cap">
+                                    <span>Project Demonstration &amp; Inspection</span>
+                                    <span class="ener-gallery-expand"><i class="fas fa-expand" aria-hidden="true"></i></span>
+                                </div>
+                            </button>
+                        </div>
+                    </div>
                 </div>
             </div>
         </section>
+
+        <!-- ===== ENERDUO LIGHTBOX ===== -->
+        <div class="ener-lightbox" id="ener-lightbox" role="dialog" aria-modal="true" aria-label="ENERDUO project photo viewer">
+            <div class="ener-lightbox-frame">
+                <button type="button" class="ener-lightbox-close" id="ener-lightbox-close" aria-label="Close photo viewer">
+                    <i class="fas fa-times" aria-hidden="true"></i>
+                </button>
+                <button type="button" class="ener-lightbox-nav ener-lightbox-prev" id="ener-lightbox-prev" aria-label="Previous photo">
+                    <i class="fas fa-chevron-left" aria-hidden="true"></i>
+                </button>
+                <img src="" alt="" id="ener-lightbox-img" />
+                <button type="button" class="ener-lightbox-nav ener-lightbox-next" id="ener-lightbox-next" aria-label="Next photo">
+                    <i class="fas fa-chevron-right" aria-hidden="true"></i>
+                </button>
+                <div class="ener-lightbox-meta">
+                    <div class="ener-lightbox-label">ENERDUO</div>
+                    <div class="ener-lightbox-caption" id="ener-lightbox-caption"></div>
+                    <div class="ener-lightbox-count" id="ener-lightbox-count"></div>
+                </div>
+            </div>
+        </div>
 
         <!-- ===== MORE PROJECTS ===== -->
         <section id="projects" aria-label="More projects">
@@ -3376,7 +3762,7 @@
                 }
                 trailLoop();
 
-                const hoverTargets = '.btn, .soc-link, .nav-links a, .mob-nav a, .ecourse, .sitem, .card, .ach-card, .pc, .bmock, #ai-orb-btn, .ai-chip, .ai-quick-btn, #ai-send, #ai-close, #ai-clear';
+                const hoverTargets = '.btn, .soc-link, .nav-links a, .mob-nav a, .ecourse, .sitem, .card, .ach-card, .pc, .bmock, #ai-orb-btn, .ai-chip, .ai-quick-btn, #ai-send, #ai-close, #ai-clear, .ener-gallery-item, .ener-lightbox-close, .ener-lightbox-nav';
                 document.addEventListener('mouseover', e => {
                     if (e.target.closest(hoverTargets)) {
                         cursor.classList.add('hover');
@@ -3386,6 +3772,75 @@
                     if (e.target.closest(hoverTargets)) {
                         cursor.classList.remove('hover');
                     }
+                });
+            })();
+
+            /* ====================================================
+               ENERDUO GALLERY + LIGHTBOX
+            ==================================================== */
+            (function initEnerduoGallery() {
+                const items = Array.from(document.querySelectorAll('.ener-gallery-item'));
+                if (!items.length) return;
+
+                const lightbox = document.getElementById('ener-lightbox');
+                const lbImg = document.getElementById('ener-lightbox-img');
+                const lbCaption = document.getElementById('ener-lightbox-caption');
+                const lbCount = document.getElementById('ener-lightbox-count');
+                const btnClose = document.getElementById('ener-lightbox-close');
+                const btnPrev = document.getElementById('ener-lightbox-prev');
+                const btnNext = document.getElementById('ener-lightbox-next');
+
+                const photos = items.map(el => {
+                    const img = el.querySelector('img');
+                    const capSpan = el.querySelector('.ener-gallery-cap span');
+                    return { src: img.src, alt: img.alt, caption: capSpan ? capSpan.textContent.trim() : '' };
+                });
+
+                let currentIndex = 0;
+                let lastFocused = null;
+
+                function renderSlide(i) {
+                    currentIndex = (i + photos.length) % photos.length;
+                    const p = photos[currentIndex];
+                    lbImg.src = p.src;
+                    lbImg.alt = p.alt;
+                    lbCaption.textContent = p.caption;
+                    lbCount.textContent = (currentIndex + 1) + ' / ' + photos.length;
+                }
+
+                function openLightbox(i) {
+                    lastFocused = document.activeElement;
+                    renderSlide(i);
+                    lightbox.classList.add('open');
+                    document.body.style.overflow = 'hidden';
+                    btnClose.focus();
+                }
+
+                function closeLightbox() {
+                    lightbox.classList.remove('open');
+                    document.body.style.overflow = '';
+                    if (lastFocused && typeof lastFocused.focus === 'function') {
+                        lastFocused.focus();
+                    }
+                }
+
+                items.forEach((el, i) => {
+                    el.addEventListener('click', () => openLightbox(i));
+                });
+
+                btnClose.addEventListener('click', closeLightbox);
+                btnPrev.addEventListener('click', () => renderSlide(currentIndex - 1));
+                btnNext.addEventListener('click', () => renderSlide(currentIndex + 1));
+
+                lightbox.addEventListener('click', (e) => {
+                    if (e.target === lightbox) closeLightbox();
+                });
+
+                document.addEventListener('keydown', (e) => {
+                    if (!lightbox.classList.contains('open')) return;
+                    if (e.key === 'Escape') closeLightbox();
+                    if (e.key === 'ArrowLeft') renderSlide(currentIndex - 1);
+                    if (e.key === 'ArrowRight') renderSlide(currentIndex + 1);
                 });
             })();
 
