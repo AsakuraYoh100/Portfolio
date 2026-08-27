@@ -2191,6 +2191,12 @@
             font-size: 0.875rem;
             color: var(--green);
             text-align: center;
+            transition: background 0.3s ease, border-color 0.3s ease, color 0.3s ease;
+        }
+        .fsuccess.ferror {
+            background: rgba(224, 92, 92, 0.07);
+            border-color: rgba(224, 92, 92, 0.2);
+            color: #e05c5c;
         }
 
         /* ================================================
@@ -3616,7 +3622,7 @@
                                     <i class="fas fa-paper-plane"></i> Send Message
                                 </button>
                                 <div class="fsuccess" id="fsuccess" role="alert">
-                                    <i class="fas fa-check-circle"></i> Opening your email app — message ready to send!
+                                    <i class="fas fa-check-circle"></i> Message sent — I'll get back to you soon!
                                 </div>
                             </form>
                         </div>
@@ -4520,9 +4526,9 @@
             setTimeout(typeLoop, 2600);
 
             /* ====================================================
-               CONTACT FORM
+               CONTACT FORM — Web3Forms automated email delivery
             ==================================================== */
-            document.getElementById('cform').addEventListener('submit', e => {
+            document.getElementById('cform').addEventListener('submit', async e => {
                 e.preventDefault();
                 const name = document.getElementById('fn').value.trim();
                 const email = document.getElementById('fe').value.trim();
@@ -4530,19 +4536,43 @@
                 const message = document.getElementById('fm').value.trim();
                 if (!name || !email || !message) return;
 
-                const sub = encodeURIComponent(subject || `Portfolio message from ${name}`);
-                const body = encodeURIComponent(`Name: ${name}\nEmail: ${email}\n\nMessage:\n${message}`);
-                window.location.href = `mailto:elijah.dedios26@gmail.com?subject=${sub}&body=${body}`;
-
                 const btn = e.target.querySelector('.fsub');
+                const successEl = document.getElementById('fsuccess');
                 btn.disabled = true;
-                btn.innerHTML = '<i class="fas fa-spinner fa-spin"></i> Opening...';
-                setTimeout(() => {
-                    document.getElementById('fsuccess').style.display = 'block';
-                    e.target.reset();
+                btn.innerHTML = '<i class="fas fa-spinner fa-spin"></i> Sending...';
+                successEl.style.display = 'none';
+                successEl.classList.remove('ferror');
+
+                try {
+                    const res = await fetch('https://api.web3forms.com/submit', {
+                        method: 'POST',
+                        headers: { 'Content-Type': 'application/json', Accept: 'application/json' },
+                        body: JSON.stringify({
+                            access_key: '10892248-ea26-40ab-bf22-10dc4f6f0c14',
+                            name,
+                            email,
+                            subject: subject || `Portfolio message from ${name}`,
+                            message,
+                            from_name: 'Portfolio Contact Form'
+                        })
+                    });
+                    const data = await res.json();
+
+                    if (data.success) {
+                        successEl.innerHTML = '<i class="fas fa-check-circle"></i> Message sent — I\'ll get back to you soon!';
+                        successEl.style.display = 'block';
+                        e.target.reset();
+                    } else {
+                        throw new Error(data.message || 'Send failed');
+                    }
+                } catch (err) {
+                    successEl.innerHTML = '<i class="fas fa-exclamation-circle"></i> Something went wrong. Please email me directly instead.';
+                    successEl.classList.add('ferror');
+                    successEl.style.display = 'block';
+                } finally {
                     btn.disabled = false;
                     btn.innerHTML = '<i class="fas fa-paper-plane"></i> Send Message';
-                }, 900);
+                }
             });
 
             /* ====================================================
