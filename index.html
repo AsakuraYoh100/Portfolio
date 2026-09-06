@@ -4526,7 +4526,7 @@
             setTimeout(typeLoop, 2600);
 
             /* ====================================================
-               CONTACT FORM — Web3Forms automated email delivery
+               CONTACT FORM — n8n webhook (email notify + auto-reply + sheet log)
             ==================================================== */
             document.getElementById('cform').addEventListener('submit', async e => {
                 e.preventDefault();
@@ -4543,28 +4543,20 @@
                 successEl.style.display = 'none';
                 successEl.classList.remove('ferror');
 
-                try {
-                    const res = await fetch('https://api.web3forms.com/submit', {
-                        method: 'POST',
-                        headers: { 'Content-Type': 'application/json', Accept: 'application/json' },
-                        body: JSON.stringify({
-                            access_key: '10892248-ea26-40ab-bf22-10dc4f6f0c14',
-                            name,
-                            email,
-                            subject: subject || `Portfolio message from ${name}`,
-                            message,
-                            from_name: 'Portfolio Contact Form'
-                        })
-                    });
-                    const data = await res.json();
+                const fullMessage = subject ? `Subject: ${subject}\n\n${message}` : message;
 
-                    if (data.success) {
-                        successEl.innerHTML = '<i class="fas fa-check-circle"></i> Message sent — I\'ll get back to you soon!';
-                        successEl.style.display = 'block';
-                        e.target.reset();
-                    } else {
-                        throw new Error(data.message || 'Send failed');
-                    }
+                try {
+                    const res = await fetch('https://portfolio334.app.n8n.cloud/webhook/portfolio-contact', {
+                        method: 'POST',
+                        headers: { 'Content-Type': 'application/json' },
+                        body: JSON.stringify({ name, email, message: fullMessage })
+                    });
+                    if (!res.ok) throw new Error('bad_status');
+                    await res.json().catch(() => ({}));
+
+                    successEl.innerHTML = '<i class="fas fa-check-circle"></i> Message sent — I\'ll get back to you soon!';
+                    successEl.style.display = 'block';
+                    e.target.reset();
                 } catch (err) {
                     successEl.innerHTML = '<i class="fas fa-exclamation-circle"></i> Something went wrong. Please email me directly instead.';
                     successEl.classList.add('ferror');
