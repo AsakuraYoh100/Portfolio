@@ -5,15 +5,23 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
     <meta name="description" content="Elijah Christian De Dios — IT Professional & Developer" />
     <title>Elijah Christian De Dios — 3D Portfolio</title>
-        <meta name="theme-color" content="#04060a" />
+    <meta name="theme-color" content="#04060a" />
     <script>
         (function () {
-            try {
-                var t = localStorage.getItem('theme');
-                document.documentElement.setAttribute('data-theme', t === 'light' ? 'light' : 'dark');
-            } catch (e) {
-                document.documentElement.setAttribute('data-theme', 'dark');
+            var theme = null;
+            try { theme = localStorage.getItem('theme'); } catch (e) {}
+
+            if (theme !== 'light' && theme !== 'dark') {
+                theme = window.matchMedia('(prefers-color-scheme: light)').matches
+                    ? 'light'
+                    : 'dark';
             }
+
+            var root = document.documentElement;
+            root.setAttribute('data-theme', theme);
+
+            var meta = document.querySelector('meta[name="theme-color"]');
+            if (meta) meta.setAttribute('content', theme === 'light' ? '#f5f7fb' : '#04060a');
         })();
     </script>
 
@@ -2946,8 +2954,9 @@
             z-index: 101;
             transition: width 0.08s ease-out;
             box-shadow: 0 0 20px rgba(42, 90, 154, 0.2);
+        }
 
-                    /* ================================================
+        /* ================================================
            THEME TOGGLE + LIGHT MODE
         ================================================ */
         body { transition: background-color .35s ease, color .35s ease; }
@@ -2961,6 +2970,21 @@
         }
         .theme-toggle:hover { background: rgba(255,255,255,.07); color: var(--t1); transform: translateY(-2px) rotate(12deg); }
         .theme-toggle:focus-visible { outline: 2px solid var(--blue-l); outline-offset: 3px; }
+
+        /* Swap sun/moon via CSS so there's no flash on load */
+        .theme-toggle .fa-moon { display: none; }
+        :root[data-theme="light"] .theme-toggle .fa-sun { display: none; }
+        :root[data-theme="light"] .theme-toggle .fa-moon { display: inline-block; }
+
+        /* Brief global cross-fade while switching themes */
+        html.theme-animating,
+        html.theme-animating *,
+        html.theme-animating *::before,
+        html.theme-animating *::after {
+            transition: background-color .35s ease, border-color .35s ease,
+                        color .35s ease, box-shadow .35s ease,
+                        fill .35s ease, stroke .35s ease !important;
+        }
 
         @media (max-width: 768px) {
             .nav-cta { display: flex; margin-left: auto; margin-right: 14px; }
@@ -3105,13 +3129,13 @@
                     <li><a href="#contact">Contact</a></li>
                 </ul>
                 <div class="nav-cta">
-    <button type="button" class="theme-toggle" id="theme-toggle" aria-label="Switch to light mode">
-        <i class="fas fa-sun" aria-hidden="true"></i>
-    </button>
-    <a href="mailto:elijah.dedios26@gmail.com" class="btn btn-ghost btn-sm nav-mail">
-        <i class="fas fa-envelope"></i> Get in touch
-    </a>
-</div>
+                    <button type="button" class="theme-toggle" id="theme-toggle"
+                            aria-label="Switch to light mode" aria-pressed="true">
+                        <i class="fas fa-sun" aria-hidden="true"></i>
+                        <i class="fas fa-moon" aria-hidden="true"></i>
+                    </button>
+                    <a href="mailto:elijah.dedios26@gmail.com" class="btn btn-ghost btn-sm nav-mail">
+                        <i class="fas fa-envelope"></i> Get in touch
                     </a>
                 </div>
                 <button class="ham" id="ham" aria-label="Menu" aria-expanded="false">
@@ -3614,7 +3638,7 @@
         <div class="tpt">Create photographs, videos, montages, and edited content for social media and marketing</div>
     </div>
 </div>
-                    
+
                     <div class="titem rev">
                         <div class="tdot-tl"></div>
                         <div class="t-date">Aug 2025 — Dec 2025 · Internship</div>
@@ -5162,35 +5186,57 @@ I'm focused on opportunities where I can contribute to IT support, systems admin
                 });
             })();
         </script>
+
         <script>
-        (function () {
-            var root = document.documentElement;
-            var btn = document.getElementById('theme-toggle');
-            var meta = document.querySelector('meta[name="theme-color"]');
-            if (!btn) return;
+            /* ====================================================
+               THEME TOGGLE
+            ==================================================== */
+            (function () {
+                var root = document.documentElement;
+                var btn  = document.getElementById('theme-toggle');
+                var meta = document.querySelector('meta[name="theme-color"]');
+                if (!btn) return;
 
-            function apply(theme) {
-                var light = theme === 'light';
-                root.setAttribute('data-theme', theme);
-                btn.setAttribute('aria-label', light ? 'Switch to dark mode' : 'Switch to light mode');
-                btn.querySelector('i').className = light ? 'fas fa-moon' : 'fas fa-sun';
-                if (meta) meta.setAttribute('content', light ? '#f5f7fb' : '#04060a');
-            }
+                var COLORS = { dark: '#04060a', light: '#f5f7fb' };
 
-            apply(root.getAttribute('data-theme') === 'light' ? 'light' : 'dark');
+                function apply(theme, animate) {
+                    if (animate) {
+                        root.classList.add('theme-animating');
+                        window.setTimeout(function () {
+                            root.classList.remove('theme-animating');
+                        }, 400);
+                    }
 
-            btn.addEventListener('click', function () {
-                var next = root.getAttribute('data-theme') === 'light' ? 'dark' : 'light';
-                apply(next);
-                try { localStorage.setItem('theme', next); } catch (e) {}
-            });
+                    var light = theme === 'light';
+                    root.setAttribute('data-theme', theme);
+                    btn.setAttribute('aria-pressed', light ? 'false' : 'true');
+                    btn.setAttribute('aria-label', light ? 'Switch to dark mode' : 'Switch to light mode');
+                    if (meta) meta.setAttribute('content', light ? COLORS.light : COLORS.dark);
 
-            var cur = document.getElementById('cursor');
-            if (cur) {
-                btn.addEventListener('mouseenter', function () { cur.classList.add('hover'); });
-                btn.addEventListener('mouseleave', function () { cur.classList.remove('hover'); });
-            }
-        })();
-    </script>
+                    window.dispatchEvent(new CustomEvent('themechange', { detail: { theme: theme } }));
+                }
+
+                apply(root.getAttribute('data-theme') === 'light' ? 'light' : 'dark', false);
+
+                btn.addEventListener('click', function () {
+                    var next = root.getAttribute('data-theme') === 'light' ? 'dark' : 'light';
+                    try { localStorage.setItem('theme', next); } catch (e) {}
+                    apply(next, true);
+                });
+
+                window.matchMedia('(prefers-color-scheme: light)')
+                    .addEventListener('change', function (e) {
+                        var stored = null;
+                        try { stored = localStorage.getItem('theme'); } catch (err) {}
+                        if (!stored) apply(e.matches ? 'light' : 'dark', true);
+                    });
+
+                var cur = document.getElementById('cursor');
+                if (cur) {
+                    btn.addEventListener('mouseenter', function () { cur.classList.add('hover'); });
+                    btn.addEventListener('mouseleave', function () { cur.classList.remove('hover'); });
+                }
+            })();
+        </script>
 </body>
-    </html>
+</html>
